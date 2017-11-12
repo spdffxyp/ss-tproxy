@@ -14,16 +14,16 @@ fi
 # 检查 chinadns_chnroute、chinadns_iplist、ipset_save_file、iptables_save_file 文件是否存在
 function chk_file() {
     if [ ! -e ${chinadns_chnroute} ]; then
-        echo -e "\e[37m${chinadns_chnroute}\e[0m file does not exist"
+        echo -e "\e[37m${chinadns_chnroute}\e[0m  [\e[1;35mnot_exist\e[0m]"
         exit 1
     elif [ ! -e ${chinadns_iplist} ]; then
-        echo -e "\e[37m${chinadns_iplist}\e[0m file does not exist"
+        echo -e "\e[37m${chinadns_iplist}\e[0m  [\e[1;35mnot_exist\e[0m]"
         exit 1
     elif [ ! -e ${ipset_save_file} ]; then
-        echo -e "\e[37m${ipset_save_file}\e[0m file does not exist"
+        echo -e "\e[37m${ipset_save_file}\e[0m  [\e[1;35mnot_exist\e[0m]"
         exit 1
     elif [ ! -e ${iptables_save_file} ]; then
-        echo -e "\e[37m${iptables_save_file}\e[0m file does not exist"
+        echo -e "\e[37m${iptables_save_file}\e[0m  [\e[1;35mnot_exist\e[0m]"
         exit 1
     fi
 }
@@ -31,27 +31,27 @@ function chk_file() {
 # 同 chk_file()，但是不调用 exit 退出
 function chk_file_not_exit() {
     if [ ! -e ${chinadns_chnroute} ]; then
-        echo -e "\e[37m${chinadns_chnroute}\e[0m file does not exist"
+        echo -e "\e[37m${chinadns_chnroute}\e[0m  [\e[1;35mnot_exist\e[0m]"
     else
-        echo -e "\e[37m${chinadns_chnroute}\e[0m file exists"
+        echo -e "\e[37m${chinadns_chnroute}\e[0m  [\e[1;32mexists\e[0m]"
     fi
 
     if [ ! -e ${chinadns_iplist} ]; then
-        echo -e "\e[37m${chinadns_iplist}\e[0m file does not exist"
+        echo -e "\e[37m${chinadns_iplist}\e[0m  [\e[1;35mnot_exist\e[0m]"
     else
-        echo -e "\e[37m${chinadns_iplist}\e[0m file exists"
+        echo -e "\e[37m${chinadns_iplist}\e[0m  [\e[1;32mexists\e[0m]"
     fi
 
     if [ ! -e ${ipset_save_file} ]; then
-        echo -e "\e[37m${ipset_save_file}\e[0m file does not exist"
+        echo -e "\e[37m${ipset_save_file}\e[0m  [\e[1;35mnot_exist\e[0m]"
     else
-        echo -e "\e[37m${ipset_save_file}\e[0m file exists"
+        echo -e "\e[37m${ipset_save_file}\e[0m  [\e[1;32mexists\e[0m]"
     fi
 
     if [ ! -e ${iptables_save_file} ]; then
-        echo -e "\e[37m${iptables_save_file}\e[0m file does not exist"
+        echo -e "\e[37m${iptables_save_file}\e[0m  [\e[1;35mnot_exist\e[0m]"
     else
-        echo -e "\e[37m${iptables_save_file}\e[0m file exists"
+        echo -e "\e[37m${iptables_save_file}\e[0m  [\e[1;32mexists\e[0m]"
     fi
 }
 
