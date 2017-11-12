@@ -422,7 +422,7 @@ case ${1} in
             echo -e "\t\e[33mupdate_ipset\e[0m\tupdate ipset-chinaip from 'http://f.ip.cn/rt/chnroutes.txt'"
             echo
             echo -e "\t\e[33mshow_ipts\e[0m\tshow iptables-shadowsocks rules"
-            echo -e "\t\e[33mclear_ipts\e[0m\tclear mangle/nat all chains"
+            echo -e "\t\e[33mclear_ipts\e[0m\tclear iptables-shadowsocks rules"
             echo -e "\t\e[33mrestore_ipts\e[0m\trestore iptables-shadowsocks from 'iptables.shadowsocks'"
             echo -e "\t\e[33mupdate_ipts\e[0m\tupdate iptables-shadowsocks based 'ss-tproxy.conf'"
             echo
