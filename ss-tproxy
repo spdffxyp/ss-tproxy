@@ -309,12 +309,39 @@ case ${1} in
         ;;
 
     *)
-        echo -e "\e[37mUsage:\e[0m \e[36m${0}\e[0m \e[1;37mCOMMAND\e[0m"
-        echo -e "\e[1;37mCOMMAND\e[0m := {"
-        echo -e "\t\e[33mstart\e[0m\tstart ss-tproxy"
-        echo -e "\t\e[33mstop\e[0m\tstop ss-tproxy"
-        echo -e "\t\e[33mrestart\e[0m\trestart ss-tproxy"
-        echo -e "\t\e[33mstatus\e[0m\tshow ss-tproxy running status"
+        {
+            echo -e "\e[37mUsage:\e[0m \e[36m${0}\e[0m \e[1;37mCOMMAND\e[0m"
+            echo -e "\e[1;37mCOMMAND\e[0m := {"
+            echo -e "\t\e[33mstart\e[0m\tstart ss-tproxy"
+            echo -e "\t\e[33mstop\e[0m\tstop ss-tproxy"
+            echo -e "\t\e[33mrestart\e[0m\trestart ss-tproxy"
+            echo -e "\t\e[33mstatus\e[0m\tshow ss-tproxy running status"
+            echo
+            echo -e "\t\e[33mchk_file\e[0m\tcheck file (chinadns_chnroute.txt, chinadns_iplist.txt, ipset.chinaip, iptables.shadowsocks)"
+            echo
+            echo -e "\t\e[33mshow_dns\e[0m\tshow '/etc/resolv.conf'"
+            echo -e "\t\e[33medit_dns\e[0m\tedit '/etc/resolv.conf'"
+            echo
+            echo -e "\t\e[33mshow_ipfwd\e[0m\tshow '/proc/sys/net/ipv4/ip_forward'"
+            echo -e "\t\e[33medit_ipfwd\e[0m\tedit '/etc/sysctl.conf'"
+            echo
+            echo -e "\t\e[33mshow_ipset\e[0m\tshow ipset-chinaip list"
+            echo -e "\t\e[33mclear_ipset\e[0m\tclear ipset-chinaip list"
+            echo -e "\t\e[33mrestore_ipset\e[0m\trestore ipset-chinaip from 'ipset.chinaip'"
+            echo
+            echo -e "\t\e[33mshow_ipts\e[0m\tshow iptables-shadowsocks rule"
+            echo -e "\t\e[33mstop_ipts\e[0m\tclear PREROUTING,OUTPUT chains"
+            echo -e "\t\e[33mclear_ipts\e[0m\tclear mangle/nat all chains, except nat/POSTROUTING chain"
+            echo -e "\t\e[33mrestore_ipts\e[0m\trestore iptables-shadowsocks from 'iptables.shadowsocks'"
+            echo
+            echo -e "\t\e[33mshow_route\e[0m\tshow ip_rule(PBR), ip_route"
+            echo -e "\t\e[33mclear_route\e[0m\tclear ip_rule(PBR), ip_route"
+            echo -e "\t\e[33mset_route\e[0m\tset ip_rule(PBR), ip_route"
+            echo
+            echo -e "\t\e[33mshow_dnsfwd\e[0m\tshow 'dnsforwarder/config' config_file"
+            echo -e "\t\e[33mgenerate_dnsfwd\e[0m\tgenerate 'dnsforwarder/config' config_file"
+            echo -e "}"
+        } | more
         exit 1
         ;;
 esac
