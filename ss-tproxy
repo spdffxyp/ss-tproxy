@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 主配置文件路径, 建议为 '/etc/ss-tproxy.conf'
-config_file='./ss-tproxy.conf'
+config_file='/etc/ss-tproxy.conf'
 
 # 加载主配置文件
 if [ ! -e ${config_file} ]; then
