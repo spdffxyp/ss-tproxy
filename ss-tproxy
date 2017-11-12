@@ -320,16 +320,15 @@ case ${1} in
         start
         status
         dns_resolv show
-        ip_forward show
         ;;
     status)
         status
         dns_resolv show
-        ip_forward show
         ;;
     stop)
         stop
         status
+        dns_resolv show
         ;;
     restart)
         stop
@@ -338,7 +337,6 @@ case ${1} in
         start
         status
         dns_resolv show
-        ip_forward show
         ;;
 
     show_ipset)
@@ -369,13 +367,13 @@ case ${1} in
         iptables_shadowsocks update
         ;;
 
-    show_route)
+    show_rule)
         ip_rule show
         ;;
-    clear_route)
+    clear_rule)
         ip_rule clear
         ;;
-    restore_route)
+    restore_rule)
         ip_rule restore
         ;;
 
@@ -426,11 +424,11 @@ case ${1} in
             echo -e "\t\e[33mrestore_ipts\e[0m\trestore iptables-shadowsocks from 'iptables.shadowsocks'"
             echo -e "\t\e[33mupdate_ipts\e[0m\tupdate iptables-shadowsocks based 'ss-tproxy.conf'"
             echo
-            echo -e "\t\e[33mshow_route\e[0m\tshow ip_rule(PBR), ip_route"
-            echo -e "\t\e[33mclear_route\e[0m\tclear ip_rule(PBR), ip_route"
-            echo -e "\t\e[33mrestore_route\e[0m\trestore ip_rule(PBR), ip_route"
+            echo -e "\t\e[33mshow_rule\e[0m\tshow ip_rule(PBR), ip_route"
+            echo -e "\t\e[33mclear_rule\e[0m\tclear ip_rule(PBR), ip_route"
+            echo -e "\t\e[33mrestore_rule\e[0m\trestore ip_rule(PBR), ip_route"
             echo
-            echo -e "\t\e[33mchk_file\e[0m\tcheck files (chinadns_chnroute.txt, chinadns_iplist.txt, ipset.chinaip, iptables.shadowsocks)"
+            echo -e "\t\e[33mchk_file\e[0m\tcheck files(chinadns_chnroute.txt, chinadns_iplist.txt, ipset.chinaip, iptables.shadowsocks)"
             echo
             echo -e "\t\e[33mshow_dnsfwd\e[0m\tshow 'dnsforwarder/config' content"
             echo -e "\t\e[33mupdate_dnsfwd\e[0m\tupdate 'dnsforwarder/config' based 'ss-tproxy.conf' && restart dnsforwarder"
