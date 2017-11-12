@@ -1,7 +1,9 @@
 #!/bin/bash
 
+# 主配置文件路径, 建议为 '/etc/ss-tproxy.conf'
 config_file='./ss-tproxy.conf'
 
+# 加载主配置文件
 if [ ! -e ${config_file} ]; then
     echo -e "\e[37m${config_file}\e[0m file does not exist"
     exit 1
@@ -9,6 +11,7 @@ else
     source ${config_file}
 fi
 
+# 检查 chinadns_chnroute、chinadns_iplist、ipset_save_file、iptables_save_file 文件是否存在
 function chk_file() {
     if [ ! -e ${chinadns_chnroute} ]; then
         echo -e "\e[37m${chinadns_chnroute}\e[0m file does not exist"
@@ -25,6 +28,34 @@ function chk_file() {
     fi
 }
 
+# 同 chk_file()，但是不调用 exit 退出
+function chk_file_not_exit() {
+    if [ ! -e ${chinadns_chnroute} ]; then
+        echo -e "\e[37m${chinadns_chnroute}\e[0m file does not exist"
+    else
+        echo -e "\e[37m${chinadns_chnroute}\e[0m file exists"
+    fi
+
+    if [ ! -e ${chinadns_iplist} ]; then
+        echo -e "\e[37m${chinadns_iplist}\e[0m file does not exist"
+    else
+        echo -e "\e[37m${chinadns_iplist}\e[0m file exists"
+    fi
+
+    if [ ! -e ${ipset_save_file} ]; then
+        echo -e "\e[37m${ipset_save_file}\e[0m file does not exist"
+    else
+        echo -e "\e[37m${ipset_save_file}\e[0m file exists"
+    fi
+
+    if [ ! -e ${iptables_save_file} ]; then
+        echo -e "\e[37m${iptables_save_file}\e[0m file does not exist"
+    else
+        echo -e "\e[37m${iptables_save_file}\e[0m file exists"
+    fi
+}
+
+# '/etc/resolv.conf' show/edit
 function dns_resolv() {
     case ${1} in
         show)
@@ -39,6 +70,7 @@ function dns_resolv() {
     esac
 }
 
+# '/proc/sys/net/ipv4/ip_forward' show, '/etc/sysctl.conf' edit/update
 function ip_forward() {
     case ${1} in
         show)
@@ -50,11 +82,54 @@ function ip_forward() {
             ;;
         edit)
             vim /etc/sysctl.conf
-            sysctl -p 2>&1 | more
+            ;;
+        update)
+            {
+                echo -e "\e[37msysctl:\e[0m"
+                sysctl -p 2>&1
+            } | more
             ;;
     esac
 }
 
+# 'dnsforwarder/config' 配置文件 show/update
+function dnsforwarder_config {
+    case ${1} in
+        show)
+            {
+                echo -e "\e[37m${dnsforwarder_conf}:\e[0m"
+                cat ${dnsforwarder_conf}
+            } | more
+            ;;
+        update)
+            cat << EOF > ${dnsforwarder_conf}
+#### 日志相关 ####
+LogOn ${dnsforwarder_log_on} # 启用日志
+LogFileThresholdLength ${dnsforwarder_log_size} # 日志大小临界值，大于该值则将原文件备份，使用新文件记录日志
+LogFileFolder ${dnsforwarder_log_dir} # 日志文件所在的文件夹
+
+#### 监听地址 ####
+UDPLocal ${dnsforwarder_addr}:${dnsforwarder_port} # 可以有多个，使用逗号隔开，默认端口53
+
+#### 上游dns ####
+UDPGroup ${dnsforwarder_upstream} * on # chinadns 作为上游 dns 服务器
+BlockNegativeResponse ${dnsforwarder_upstream_block_negative_response} # 过滤上游 dns 未成功的响应
+
+#### dns缓存 ####
+UseCache ${dnsforwarder_cache_on} # 启用缓存（文件缓存）
+MemoryCache ${dnsforwarder_cache_use_memory} # 不使用内存缓存
+CacheSize ${dnsforwarder_cache_size} # 缓存大小，不能小于 102400
+
+IgnoreTTL ${dnsforwarder_cache_ignore_ttl} # 忽略 TTL 值
+
+ReloadCache ${dnsforwarder_cache_reload_on_start} # 启动时加载已有的文件缓存
+OverwriteCache ${dnsforwarder_cache_overwrite_when_reload_failed} # 当已有的文件缓存载入失败时，覆盖原文件
+EOF
+            ;;
+    esac
+}
+
+# ipset 相关, show/clear/restore/update
 function ipset_chinaip() {
     case ${1} in
         show)
@@ -69,9 +144,10 @@ function ipset_chinaip() {
         restore)
             ipset -R < ${ipset_save_file}
             ;;
-        update)
-            curl -sL http://f.ip.cn/rt/chnroutes.txt | egrep -v '^$|^#' > /tmp/ss-tproxy_chinaip.txt
-            for i in `cat chinaip.txt`; do echo ipset -A chinaip $i >> /tmp/ss-tproxy_chinaip.sh; done
+        update) # 必须先执行 iptables_shadowsocks clear
+            curl -sL http://f.ip.cn/rt/chnroutes.txt | egrep -v '^\s*$|^\s*#' > /tmp/ss-tproxy_chinaip.txt
+            echo -n > /tmp/ss-tproxy_chinaip.sh
+            for i in `cat /tmp/ss-tproxy_chinaip.txt`; do echo "ipset -A chinaip ${i}" >> /tmp/ss-tproxy_chinaip.sh; done
             ipset -X &> /dev/null
             ipset -N chinaip hash:net
             bash /tmp/ss-tproxy_chinaip.sh
@@ -81,6 +157,7 @@ function ipset_chinaip() {
     esac
 }
 
+# iptables 相关, show/clear/restore/update
 function iptables_shadowsocks() {
     case ${1} in
         show)
@@ -91,18 +168,12 @@ function iptables_shadowsocks() {
                 iptables -t nat -nvL --line-numbers
             } | more
             ;;
-        stop)
-            iptables -t mangle -F PREROUTING
-            iptables -t nat -F PREROUTING
-            iptables -t nat -F OUTPUT
-            ;;
         clear)
             iptables -t mangle -F
             iptables -t mangle -X SS-UDP &> /dev/null
-            iptables -t nat -F PREROUTING
-            iptables -t nat -F INPUT
-            iptables -t nat -F OUTPUT
+            iptables -t nat -F
             iptables -t nat -X SS-TCP &> /dev/null
+            iptables -t nat -A POSTROUTING -s ${iptables_intranet} -j MASQUERADE
             ;;
         restore)
             iptables-restore < ${iptables_save_file}
@@ -112,9 +183,6 @@ function iptables_shadowsocks() {
             iptables -t mangle -X SS-UDP &> /dev/null
             iptables -t nat -F
             iptables -t nat -X SS-TCP &> /dev/null
-
-            ipset -X &> /dev/null
-            ipset -R < ${ipset_save_file}
 
             iptables -t mangle -N SS-UDP
             iptables -t mangle -A SS-UDP -d 0/8 -j RETURN
@@ -154,6 +222,7 @@ function iptables_shadowsocks() {
     esac
 }
 
+# PBR 策略路由 show/clear/restore
 function ip_rule() {
     case ${1} in
         show)
@@ -168,49 +237,14 @@ function ip_rule() {
             ip rule del pref $(ip rule show | grep 'fwmark 0x2333/0x2333' | awk -F':' '{print $1}') &> /dev/null
             ip route flush table 100
             ;;
-        set)
+        restore)
             ip route add local 0/0 dev lo table 100
             ip rule add fwmark 0x2333/0x2333 table 100
             ;;
     esac
 }
 
-function dnsforwarder_config {
-    case ${1} in
-        generate)
-            cat << EOF > ${dnsforwarder_conf}
-#### 日志相关 ####
-LogOn ${dnsforwarder_log_on} # 启用日志
-LogFileThresholdLength ${dnsforwarder_log_size} # 日志大小临界值，大于该值则将原文件备份，使用新文件记录日志
-LogFileFolder ${dnsforwarder_log_dir} # 日志文件所在的文件夹
-
-#### 监听地址 ####
-UDPLocal ${dnsforwarder_addr}:${dnsforwarder_port} # 可以有多个，使用逗号隔开，默认端口53
-
-#### 上游dns ####
-UDPGroup ${dnsforwarder_upstream} * on # chinadns 作为上游 dns 服务器
-BlockNegativeResponse ${dnsforwarder_upstream_block_negative_response} # 过滤上游 dns 未成功的响应
-
-#### dns缓存 ####
-UseCache ${dnsforwarder_cache_on} # 启用缓存（文件缓存）
-MemoryCache ${dnsforwarder_cache_use_memory} # 不使用内存缓存
-CacheSize ${dnsforwarder_cache_size} # 缓存大小，不能小于 102400
-
-IgnoreTTL ${dnsforwarder_cache_ignore_ttl} # 忽略 TTL 值
-
-ReloadCache ${dnsforwarder_cache_reload_on_start} # 启动时加载已有的文件缓存
-OverwriteCache ${dnsforwarder_cache_overwrite_when_reload_failed} # 当已有的文件缓存载入失败时，覆盖原文件
-EOF
-            ;;
-        show)
-            {
-                echo -e "\e[37m${dnsforwarder_conf}:\e[0m"
-                cat ${dnsforwarder_conf}
-            } | more
-            ;;
-    esac
-}
-
+# start() 函数, 运行 ss-redir、ss-tunnel、chinadns、dnsforwarder、恢复 ipset_chinaip、恢复 iptables_shadowsocks、设置策略路由
 function start() {
     if [ ${redir_verbose} == 'true' ]; then
         nohup ss-redir -s ${server_addr} -p ${server_port} -m ${server_method} -k ${server_passwd} -b ${redir_addr} -l ${redir_port} -u -v < /dev/null &>> ${redir_log} &
@@ -230,15 +264,16 @@ function start() {
         nohup chinadns -b ${chinadns_addr} -p ${chinadns_port} -s ${chinadns_upstream} -c ${chinadns_chnroute} -l ${chinadns_iplist} -m -d < /dev/null &>> ${chinadns_log} &
     fi
 
-    dnsforwarder_config generate
+    dnsforwarder_config update
     dnsforwarder -d &> /dev/null
 
     ipset_chinaip restore
     iptables_shadowsocks restore
 
-    ip_rule set
+    ip_rule update
 }
 
+# stop() 函数, 终止 ss-redir、ss-tunnel、chinadns、dnsforwarder、清空 iptables_shadowsocks、清空 ipset_chinaip、清空策略路由
 function stop() {
     pgrep ss-redir | xargs kill -9 &> /dev/null
     pgrep ss-tunnel | xargs kill -9 &> /dev/null
@@ -251,6 +286,7 @@ function stop() {
     ip_rule clear
 }
 
+# status() 函数，打印 ss-redir、ss-tunnel、chinadns、dnsforwarder 运行状态
 function status() {
     if [ $(pgrep -c ss-redir) -ge 1 ]; then
         echo -e "\e[37mss-redir\e[0m\t[\e[1;32mrunning\e[0m]"
@@ -277,6 +313,7 @@ function status() {
     fi
 }
 
+# main() 主函数
 case ${1} in
     start)
         chk_file
@@ -297,6 +334,7 @@ case ${1} in
     restart)
         stop
         status
+        chk_file
         start
         status
         dns_resolv show
@@ -312,18 +350,23 @@ case ${1} in
     restore_ipset)
         ipset_chinaip restore
         ;;
+    update_ipset)
+        iptables_shadowsocks clear
+        ipset_chinaip update
+        iptables_shadowsocks update
+        ;;
 
     show_ipts)
         iptables_shadowsocks show
-        ;;
-    stop_ipts)
-        iptables_shadowsocks stop
         ;;
     clear_ipts)
         iptables_shadowsocks clear
         ;;
     restore_ipts)
         iptables_shadowsocks restore
+        ;;
+    update_ipts)
+        iptables_shadowsocks update
         ;;
 
     show_route)
@@ -332,18 +375,21 @@ case ${1} in
     clear_route)
         ip_rule clear
         ;;
-    set_route)
-        ip_rule set
+    restore_route)
+        ip_rule restore
         ;;
 
     chk_file)
-        chk_file
+        chk_file_not_exit
         ;;
+
     show_dnsfwd)
         dnsforwarder_config show
         ;;
-    generate_dnsfwd)
-        dnsforwarder_config generate
+    update_dnsfwd)
+        dnsforwarder_config update
+        pgrep dnsforwarder | xargs kill -9 &> /dev/null
+        dnsforwarder -d &> /dev/null
         ;;
 
     show_dns)
@@ -358,6 +404,7 @@ case ${1} in
         ;;
     edit_ipfwd)
         ip_forward edit
+        ip_forward update
         ;;
 
     *)
@@ -369,30 +416,30 @@ case ${1} in
             echo -e "\t\e[33mrestart\e[0m\t\trestart ss-tproxy"
             echo -e "\t\e[33mstatus\e[0m\t\tshow ss-tproxy running status"
             echo
-            echo -e "\t\e[33mshow_ipset\e[0m\tshow ipset-chinaip list"
-            echo -e "\t\e[33mclear_ipset\e[0m\tclear ipset-chinaip list"
+            echo -e "\t\e[33mshow_ipset\e[0m\tshow ipset-chinaip lists"
+            echo -e "\t\e[33mclear_ipset\e[0m\tclear ipset-chinaip lists"
             echo -e "\t\e[33mrestore_ipset\e[0m\trestore ipset-chinaip from 'ipset.chinaip'"
             echo -e "\t\e[33mupdate_ipset\e[0m\tupdate ipset-chinaip from 'http://f.ip.cn/rt/chnroutes.txt'"
             echo
-            echo -e "\t\e[33mshow_ipts\e[0m\tshow iptables-shadowsocks rule"
-            echo -e "\t\e[33mstop_ipts\e[0m\tclear PREROUTING,OUTPUT chains"
-            echo -e "\t\e[33mclear_ipts\e[0m\tclear mangle/nat all chains, except nat/POSTROUTING chain"
+            echo -e "\t\e[33mshow_ipts\e[0m\tshow iptables-shadowsocks rules"
+            echo -e "\t\e[33mclear_ipts\e[0m\tclear mangle/nat all chains"
             echo -e "\t\e[33mrestore_ipts\e[0m\trestore iptables-shadowsocks from 'iptables.shadowsocks'"
             echo -e "\t\e[33mupdate_ipts\e[0m\tupdate iptables-shadowsocks based 'ss-tproxy.conf'"
             echo
             echo -e "\t\e[33mshow_route\e[0m\tshow ip_rule(PBR), ip_route"
             echo -e "\t\e[33mclear_route\e[0m\tclear ip_rule(PBR), ip_route"
-            echo -e "\t\e[33mset_route\e[0m\tset ip_rule(PBR), ip_route"
+            echo -e "\t\e[33mrestore_route\e[0m\trestore ip_rule(PBR), ip_route"
             echo
-            echo -e "\t\e[33mchk_file\e[0m\tcheck file (chinadns_chnroute.txt, chinadns_iplist.txt, ipset.chinaip, iptables.shadowsocks)"
-            echo -e "\t\e[33mshow_dnsfwd\e[0m\tshow 'dnsforwarder/config' config_file"
-            echo -e "\t\e[33mgenerate_dnsfwd\e[0m\tgenerate 'dnsforwarder/config' config_file"
+            echo -e "\t\e[33mchk_file\e[0m\tcheck files (chinadns_chnroute.txt, chinadns_iplist.txt, ipset.chinaip, iptables.shadowsocks)"
+            echo
+            echo -e "\t\e[33mshow_dnsfwd\e[0m\tshow 'dnsforwarder/config' content"
+            echo -e "\t\e[33mupdate_dnsfwd\e[0m\tupdate 'dnsforwarder/config' based 'ss-tproxy.conf' && restart dnsforwarder"
             echo
             echo -e "\t\e[33mshow_dns\e[0m\tshow '/etc/resolv.conf'"
             echo -e "\t\e[33medit_dns\e[0m\tedit '/etc/resolv.conf'"
             echo
             echo -e "\t\e[33mshow_ipfwd\e[0m\tshow '/proc/sys/net/ipv4/ip_forward'"
-            echo -e "\t\e[33medit_ipfwd\e[0m\tedit '/etc/sysctl.conf'"
+            echo -e "\t\e[33medit_ipfwd\e[0m\tedit '/etc/sysctl.conf' && execute 'sysctl -p'"
             echo -e "}"
         } | more
         exit 1
