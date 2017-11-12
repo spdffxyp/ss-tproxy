@@ -1,6 +1,6 @@
 #!/bin/bash
 
-config_file='./ss-tproxy.conf'
+config_file='/etc/ss-tproxy.conf'
 
 if [ ! -e ${config_file} ]; then
     echo -e "\e[37m${config_file}\e[0m file does not exist"
