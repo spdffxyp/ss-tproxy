@@ -69,6 +69,15 @@ function ipset_chinaip() {
         restore)
             ipset -R < ${ipset_save_file}
             ;;
+        update)
+            curl -sL http://f.ip.cn/rt/chnroutes.txt | egrep -v '^$|^#' > /tmp/ss-tproxy_chinaip.txt
+            for i in `cat chinaip.txt`; do echo ipset -A chinaip $i >> /tmp/ss-tproxy_chinaip.sh; done
+            ipset -X &> /dev/null
+            ipset -N chinaip hash:net
+            bash /tmp/ss-tproxy_chinaip.sh
+            ipset -S > ${ipset_save_file}
+            rm -fr /tmp/ss-tproxy_chinaip.txt /tmp/ss-tproxy_chinaip.sh
+            ;;
     esac
 }
 
@@ -97,6 +106,50 @@ function iptables_shadowsocks() {
             ;;
         restore)
             iptables-restore < ${iptables_save_file}
+            ;;
+        update)
+            iptables -t mangle -F
+            iptables -t mangle -X SS-UDP &> /dev/null
+            iptables -t nat -F
+            iptables -t nat -X SS-TCP &> /dev/null
+
+            ipset -X &> /dev/null
+            ipset -R < ${ipset_save_file}
+
+            iptables -t mangle -N SS-UDP
+            iptables -t mangle -A SS-UDP -d 0/8 -j RETURN
+            iptables -t mangle -A SS-UDP -d 127/8 -j RETURN
+            iptables -t mangle -A SS-UDP -d 10/8 -j RETURN
+            iptables -t mangle -A SS-UDP -d 169.254/16 -j RETURN
+            iptables -t mangle -A SS-UDP -d 172.16/12 -j RETURN
+            iptables -t mangle -A SS-UDP -d 192.168/16 -j RETURN
+            iptables -t mangle -A SS-UDP -d 224/4 -j RETURN
+            iptables -t mangle -A SS-UDP -d 240/4 -j RETURN
+            iptables -t mangle -A SS-UDP -d ${server_addr} -j RETURN
+            iptables -t mangle -A SS-UDP -m set --match-set chinaip dst -j RETURN
+            iptables -t mangle -A SS-UDP -p udp -j TPROXY --tproxy-mark 0x2333/0x2333 --on-port ${redir_port}
+
+            iptables -t mangle -A PREROUTING -p udp -s ${iptables_intranet} -j SS-UDP
+
+            iptables -t nat -N SS-TCP
+            iptables -t nat -A SS-TCP -d 0/8 -j RETURN
+            iptables -t nat -A SS-TCP -d 127/8 -j RETURN
+            iptables -t nat -A SS-TCP -d 10/8 -j RETURN
+            iptables -t nat -A SS-TCP -d 169.254/16 -j RETURN
+            iptables -t nat -A SS-TCP -d 172.16/12 -j RETURN
+            iptables -t nat -A SS-TCP -d 192.168/16 -j RETURN
+            iptables -t nat -A SS-TCP -d 224/4 -j RETURN
+            iptables -t nat -A SS-TCP -d 240/4 -j RETURN
+            iptables -t nat -A SS-TCP -d ${server_addr} -j RETURN
+            iptables -t nat -A SS-TCP -m set --match-set chinaip dst -j RETURN
+            iptables -t nat -A SS-TCP -p tcp -j REDIRECT --to-ports ${redir_port}
+
+            iptables -t nat -A OUTPUT -p tcp -j SS-TCP
+            iptables -t nat -A PREROUTING -p tcp -s ${iptables_intranet} -j SS-TCP
+
+            iptables -t nat -A POSTROUTING -s ${iptables_intranet} -j MASQUERADE
+
+            iptables-save > ${iptables_save_file}
             ;;
     esac
 }
