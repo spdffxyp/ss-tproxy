@@ -270,7 +270,7 @@ function start() {
     ipset_chinaip restore
     iptables_shadowsocks restore
 
-    ip_rule update
+    ip_rule restore
 }
 
 # stop() 函数, 终止 ss-redir、ss-tunnel、chinadns、dnsforwarder、清空 iptables_shadowsocks、清空 ipset_chinaip、清空策略路由
