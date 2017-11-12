@@ -1,0 +1,170 @@
+#!/bin/bash
+
+# config_file='./ss-tproxy.conf'
+# 
+# if [ ! -e ${config_file} ]; then
+#     echo -e "\e[37m${config_file}\e[0m file does not exist"
+#     exit 1
+# else
+#     source ${config_file}
+# fi
+
+## 服务器信息
+server_addr='ss15.acrossgw.info' # 服务器地址
+server_port='20633'              # 服务器端口
+server_method='aes-128-cfb'      # 加密方式
+server_passwd='passwd.zfl9.com'  # 账户密码
+
+## ss-redir 配置
+redir_addr='0.0.0.0'    # 监听地址
+redir_port='1080'       # 监听端口
+redir_verbose='false'   # 详细日志 true/false
+redir_log='/var/log/ss-redir.log' # 日志文件
+
+## ss-tunnel 配置
+tunnel_addr='0.0.0.0'        # 监听地址
+tunnel_port='1053'           # 监听端口
+tunnel_verbose='false'       # 详细日志 true/false
+tunnel_upstream='8.8.8.8:53' # 上游dns服务器, 须为国外公共dns
+tunnel_log='/var/log/ss-tunnel.log' # 日志文件
+
+## chinadns 配置
+chinadns_addr='0.0.0.0'     # 监听地址
+chinadns_port='5353'        # 监听端口
+chinadns_upstream="114.114.114.114,127.0.0.1:${tunnel_port}" # 上游dns服务器
+chinadns_chnroute='/etc/chinadns/chnroute.txt' # 大陆地址段列表
+chinadns_iplist='/etc/chinadns/iplist.txt'     # ip黑名单列表
+chinadns_verbose='false'                       # 详细日志 true/false
+chinadns_log='/var/log/chinadns.log'           # 日志文件
+
+## dnsforwarder 配置
+dnsforwarder_conf='/root/.dnsforwarder/config' # 配置文件
+dnsforwarder_log_on='true'          # 是否记录日志 true/false
+dnsforwarder_log_size='5120000'     # 日志文件大小临界值(byte)
+dnsforwarder_log_dir='/var/log/'    # 日志文件所在目录
+dnsforwarder_addr='0.0.0.0'         # 监听地址
+dnsforwarder_port='53'              # 监听端口
+dnsforwarder_upstream="127.0.0.1:${chinadns_port}"   # 上游dns服务器
+dnsforwarder_upstream_block_negative_response='true' # 丢弃上游dns未成功的响应
+dnsforwarder_cache_on='true'                # 启用dns缓存(文件缓存) true/false
+dnsforwarder_cache_use_memory='false'       # 启用dns缓存(内存缓存) true/false
+dnsforwarder_cache_size='30720000'          # dns缓存大小(byte), 不能小于 102400 bytes
+dnsforwarder_cache_ignore_ttl='true'        # 忽略ttl值 true/false
+dnsforwarder_cache_reload_on_start='true'   # 在程序启动时自动加载已有的缓存条目 true/false
+dnsforwarder_cache_overwrite_when_reload_failed='true' # 如果加载缓存条目失败, 则覆盖缓存文件 true/false
+
+## ipset 配置
+ipset_save_file='/etc/ipset.chinaip'           # ipset列表文件
+
+## iptables 配置
+iptables_save_file='/etc/iptables.shadowsocks' # iptables规则文件
+iptables_intranet='192.168.0.0/16'             # 内网所在的网段
+
+function chk_file() {
+    if [ ! -e ${chinadns_chnroute} ]; then
+        echo -e "\e[37m${chinadns_chnroute}\e[0m file does not exist"
+        exit 1
+    elif [ ! -e ${chinadns_iplist} ]; then
+        echo -e "\e[37m${chinadns_iplist}\e[0m file does not exist"
+        exit 1
+    elif [ ! -e ${ipset_save_file} ]; then
+        echo -e "\e[37m${ipset_save_file}\e[0m file does not exist"
+        exit 1
+    elif [ ! -e ${iptables_save_file} ]; then
+        echo -e "\e[37m${iptables_save_file}\e[0m file does not exist"
+        exit 1
+    fi
+}
+
+function dns_resolv() {
+    case ${1} in
+        show)
+            {
+                echo -e "\e[37mdns_server:\e[0m"
+                cat /etc/resolv.conf | egrep -v '^\s*$|^\s*#'
+            } | more
+            ;;
+        edit)
+            vim /etc/resolv.conf
+            ;;
+    esac
+}
+
+function ip_forward() {
+    case ${1} in
+        show)
+            if [ $(cat /proc/sys/net/ipv4/ip_forward) -eq 1 ]; then
+                echo -e "\e[37mip_forward\e[0m\t[\e[1;32menabled\e[0m]"
+            else
+                echo -e "\e[37mip_forward\e[0m\t[\e[1;35mdisabled\e[0m]"
+            fi
+            ;;
+        edit)
+            vim /etc/sysctl.conf
+            sysctl -p 2>&1 | more
+            ;;
+    esac
+}
+
+function ipset_chinaip() {
+    case ${1} in
+        show)
+            {
+                echo -e "\e[37mipset_chinaip:\e[0m"
+                ipset -L
+            } | more
+            ;;
+        clear)
+            ipset -X &> /dev/null
+            ;;
+        restore)
+            ipset -R < ${ipset_save_file}
+            ;;
+    esac
+}
+
+function iptables_shadowsocks() {
+    case ${1} in
+        show)
+            {
+                echo -e "\e[37miptables_mangle:\e[0m"
+                iptables -t mangle -nvL --line-numbers
+                echo -e "\e[37miptables_nat:\e[0m"
+                iptables -t nat -nvL --line-numbers
+            } | more
+            ;;
+        stop)
+            iptables -t mangle -F PREROUTING
+            iptables -t nat -F PREROUTING
+            iptables -t nat -F OUTPUT
+            ;;
+        clear)
+            iptables -t mangle -F
+            iptables -t mangle -X SS-UDP &> /dev/null
+            iptables -t nat -F PREROUTING
+            iptables -t nat -F INPUT
+            iptables -t nat -F OUTPUT
+            iptables -t nat -X SS-TCP &> /dev/null
+            ;;
+        restore)
+            iptables-restore < ${iptables_save_file}
+            ;;
+    esac
+}
+
+function ip_rule() {
+    case ${1} in
+        show)
+            {
+                echo -e "\e[37mip_rule:\e[0m"
+                ip rule show
+                echo -e "\e[37mip_route:\e[0m"
+                ip route show table 100
+            } | more
+            ;;
+        clear)
+            ip rule del pref $(ip rule show | grep 'fwmark 0x2333/0x2333' | awk -F':' '{print $1}') &> /dev/null
+            ip route flush table 100
+            ;;
+    esac
+}
