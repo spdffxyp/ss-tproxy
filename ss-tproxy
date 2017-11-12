@@ -312,10 +312,10 @@ case ${1} in
         {
             echo -e "\e[37mUsage:\e[0m \e[36m${0}\e[0m \e[1;37mCOMMAND\e[0m"
             echo -e "\e[1;37mCOMMAND\e[0m := {"
-            echo -e "\t\e[33mstart\e[0m\tstart ss-tproxy"
-            echo -e "\t\e[33mstop\e[0m\tstop ss-tproxy"
-            echo -e "\t\e[33mrestart\e[0m\trestart ss-tproxy"
-            echo -e "\t\e[33mstatus\e[0m\tshow ss-tproxy running status"
+            echo -e "\t\e[33mstart\e[0m\t\tstart ss-tproxy"
+            echo -e "\t\e[33mstop\e[0m\t\tstop ss-tproxy"
+            echo -e "\t\e[33mrestart\e[0m\t\trestart ss-tproxy"
+            echo -e "\t\e[33mstatus\e[0m\t\tshow ss-tproxy running status"
             echo
             echo -e "\t\e[33mchk_file\e[0m\tcheck file (chinadns_chnroute.txt, chinadns_iplist.txt, ipset.chinaip, iptables.shadowsocks)"
             echo
