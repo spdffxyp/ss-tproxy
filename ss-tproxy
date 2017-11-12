@@ -166,5 +166,206 @@ function ip_rule() {
             ip rule del pref $(ip rule show | grep 'fwmark 0x2333/0x2333' | awk -F':' '{print $1}') &> /dev/null
             ip route flush table 100
             ;;
+        set)
+            ip route add local 0/0 dev lo table 100
+            ip rule add fwmark 0x2333/0x2333 table 100
+            ;;
     esac
 }
+
+function dnsforwarder_config {
+    case ${1} in
+        generate)
+            cat << EOF > ${dnsforwarder_conf}
+#### 日志相关 ####
+LogOn ${dnsforwarder_log_on} # 启用日志
+LogFileThresholdLength ${dnsforwarder_log_size} # 日志大小临界值，大于该值则将原文件备份，使用新文件记录日志
+LogFileFolder ${dnsforwarder_log_dir} # 日志文件所在的文件夹
+
+#### 监听地址 ####
+UDPLocal ${dnsforwarder_addr}:${dnsforwarder_port} # 可以有多个，使用逗号隔开，默认端口53
+
+#### 上游dns ####
+UDPGroup ${dnsforwarder_upstream} * on # chinadns 作为上游 dns 服务器
+BlockNegativeResponse ${dnsforwarder_upstream_block_negative_response} # 过滤上游 dns 未成功的响应
+
+#### dns缓存 ####
+UseCache ${dnsforwarder_cache_on} # 启用缓存（文件缓存）
+MemoryCache ${dnsforwarder_cache_use_memory} # 不使用内存缓存
+CacheSize ${dnsforwarder_cache_size} # 缓存大小，不能小于 102400
+
+IgnoreTTL ${dnsforwarder_cache_ignore_ttl} # 忽略 TTL 值
+
+ReloadCache ${dnsforwarder_cache_reload_on_start} # 启动时加载已有的文件缓存
+OverwriteCache ${dnsforwarder_cache_overwrite_when_reload_failed} # 当已有的文件缓存载入失败时，覆盖原文件
+EOF
+            ;;
+        show)
+            {
+                echo -e "\e[37m${dnsforwarder_conf}:\e[0m"
+                cat ${dnsforwarder_conf}
+            } | more
+            ;;
+    esac
+}
+
+function start() {
+    if [ ${redir_verbose} == 'true' ]; then
+        nohup ss-redir -s ${server_addr} -p ${server_port} -m ${server_method} -k ${server_passwd} -b ${redir_addr} -l ${redir_port} -u -v < /dev/null &>> ${redir_log} &
+    else
+        nohup ss-redir -s ${server_addr} -p ${server_port} -m ${server_method} -k ${server_passwd} -b ${redir_addr} -l ${redir_port} -u < /dev/null &>> ${redir_log} &
+    fi
+
+    if [ ${tunnel_verbose} == 'true' ]; then
+        nohup ss-tunnel -s ${server_addr} -p ${server_port} -m ${server_method} -k ${server_passwd} -b ${tunnel_addr} -l ${tunnel_port} -L ${tunnel_upstream} -u -v < /dev/null &>> ${tunnel_log} &
+    else
+        nohup ss-tunnel -s ${server_addr} -p ${server_port} -m ${server_method} -k ${server_passwd} -b ${tunnel_addr} -l ${tunnel_port} -L ${tunnel_upstream} -u < /dev/null &>> ${tunnel_log} &
+    fi
+
+    if [ ${chinadns_verbose} == 'true' ]; then
+        nohup chinadns -b ${chinadns_addr} -p ${chinadns_port} -s ${chinadns_upstream} -c ${chinadns_chnroute} -l ${chinadns_iplist} -m -d -v < /dev/null &>> ${chinadns_log} &
+    else
+        nohup chinadns -b ${chinadns_addr} -p ${chinadns_port} -s ${chinadns_upstream} -c ${chinadns_chnroute} -l ${chinadns_iplist} -m -d < /dev/null &>> ${chinadns_log} &
+    fi
+
+    dnsforwarder_config generate
+    dnsforwarder -d &> /dev/null
+
+    ipset_chinaip restore
+    iptables_shadowsocks restore
+
+    ip_rule set
+}
+
+function stop() {
+    pgrep ss-redir | xargs kill -9 &> /dev/null
+    pgrep ss-tunnel | xargs kill -9 &> /dev/null
+    pgrep chinadns | xargs kill -9 &> /dev/null
+    pgrep dnsforwarder | xargs kill -9 &> /dev/null
+
+    iptables_shadowsocks clear
+    ipset_chinaip clear
+
+    ip_rule clear
+}
+
+function status() {
+    if [ $(pgrep -c ss-redir) -ge 1 ]; then
+        echo -e "\e[37mss-redir\e[0m\t[\e[1;32mrunning\e[0m]"
+    else
+        echo -e "\e[37mss-redir\e[0m\t[\e[1;35mstopped\e[0m]"
+    fi
+
+    if [ $(pgrep -c ss-tunnel) -ge 1 ]; then
+        echo -e "\e[37mss-tunnel\e[0m\t[\e[1;32mrunning\e[0m]"
+    else
+        echo -e "\e[37mss-tunnel\e[0m\t[\e[1;35mstopped\e[0m]"
+    fi
+
+    if [ $(pgrep -c chinadns) -ge 1 ]; then
+        echo -e "\e[37mchinadns\e[0m\t[\e[1;32mrunning\e[0m]"
+    else
+        echo -e "\e[37mchinadns\e[0m\t[\e[1;35mstopped\e[0m]"
+    fi
+
+    if [ $(pgrep -c dnsforwarder) -ge 1 ]; then
+        echo -e "\e[37mdnsforwarder\e[0m\t[\e[1;32mrunning\e[0m]"
+    else
+        echo -e "\e[37mdnsforwarder\e[0m\t[\e[1;35mstopped\e[0m]"
+    fi
+}
+
+case ${1} in
+    start)
+        chk_file
+        start
+        status
+        dns_resolv show
+        ip_forward show
+        ;;
+    status)
+        status
+        dns_resolv show
+        ip_forward show
+        ;;
+    stop)
+        stop
+        status
+        ;;
+    restart)
+        stop
+        status
+        start
+        status
+        dns_resolv show
+        ip_forward show
+        ;;
+
+    chk_file)
+        chk_file
+        ;;
+
+    show_dns)
+        dns_resolv show
+        ;;
+    edit_dns)
+        dns_resolv edit
+        ;;
+
+    show_ipfwd)
+        ip_forward show
+        ;;
+    edit_ipfwd)
+        ip_forward edit
+        ;;
+
+    show_ipset)
+        ipset_chinaip show
+        ;;
+    clear_ipset)
+        ipset_chinaip clear
+        ;;
+    restore_ipset)
+        ipset_chinaip restore
+        ;;
+
+    show_ipts)
+        iptables_shadowsocks show
+        ;;
+    stop_ipts)
+        iptables_shadowsocks stop
+        ;;
+    clear_ipts)
+        iptables_shadowsocks clear
+        ;;
+    restore_ipts)
+        iptables_shadowsocks restore
+        ;;
+
+    show_route)
+        ip_rule show
+        ;;
+    clear_route)
+        ip_rule clear
+        ;;
+    set_route)
+        ip_rule set
+        ;;
+
+    show_dnsfwd)
+        dnsforwarder_config show
+        ;;
+    generate_dnsfwd)
+        dnsforwarder_config generate
+        ;;
+
+    *)
+        echo -e "\e[37mUsage:\e[0m \e[36m${0}\e[0m \e[1;37mCOMMAND\e[0m"
+        echo -e "\e[1;37mCOMMAND\e[0m := {"
+        echo -e "\t\e[33mstart\e[0m\tstart ss-tproxy"
+        echo -e "\t\e[33mstop\e[0m\tstop ss-tproxy"
+        echo -e "\t\e[33mrestart\e[0m\trestart ss-tproxy"
+        echo -e "\t\e[33mstatus\e[0m\tshow ss-tproxy running status"
+        exit 1
+        ;;
+esac
