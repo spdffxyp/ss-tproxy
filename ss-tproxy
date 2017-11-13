@@ -445,7 +445,7 @@ case ${1} in
             echo
             echo -e "\t\e[33mshow_dnsfwd\e[0m\tshow 'dnsforwarder/config' content"
             echo -e "\t\e[33mflush_dnsfwd\e[0m\tflush 'dnsforwarder/cache' dns_cache"
-            echo -e "\t\e[33mupdate_dnsfwd\e[0m\tupdate 'dnsforwarder/config' based 'ss-tproxy.conf' && restart dnsforwarder"
+            echo -e "\t\e[33mupdate_dnsfwd\e[0m\tupdate 'dnsforwarder/config' based 'ss-tproxy.conf'"
             echo
             echo -e "\t\e[33mshow_ipset\e[0m\tshow ipset-chinaip lists"
             echo -e "\t\e[33mclear_ipset\e[0m\tclear ipset-chinaip lists"

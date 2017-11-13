@@ -34,7 +34,7 @@
 **其他参数**
 - `show_dnsfwd`：查看 dnsforwarder/config 配置文件
 - `flush_dnsfwd`：清空 dnsforwarder/cache dns缓存
-- `update_dnsfwd`：更新 dnsforwarder/config 配置文件，并重启 dnsforwarder 使其生效
+- `update_dnsfwd`：更新 dnsforwarder/config 配置文件
 
 - `show_ipset`：查看 ipset-chinaip 大陆地址段
 - `clear_ipset`：清空 ipset-chinaip 大陆地址段
