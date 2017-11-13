@@ -71,7 +71,7 @@
 - CentOS 7.x 及 ArchLinux
  1. 因为使用 systemd 代替了 sysvinit，因此稍微复杂一些
  2. 配置自定义 rc-local.service 系统服务，`vim /etc/systemd/system/rc-local.service`，内容如下：
-```conf
+```systemd
 [Unit]
 Description=/etc/rc.local
 ConditionPathExists=/etc/rc.local
