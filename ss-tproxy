@@ -424,6 +424,7 @@ case ${1} in
     *)
         {
             echo -e "\e[37mUsage:\e[0m \e[36m${0}\e[0m \e[1;37mCOMMAND\e[0m"
+            echo -e "\e[34mauthor\e[0m: \e[37mOtokaze\e[0m \e[34mreference\e[0m: \e[4;37mhttps://www.zfl9.com/ss-redir.html\e[0m \e[34mEmail\e[0m: \e[4;37mj1002238565@gmail.com\e[0m"
             echo -e "\e[1;37mCOMMAND\e[0m := {"
             echo -e "\t\e[33mstart\e[0m\t\tstart ss-tproxy"
             echo -e "\t\e[33mstop\e[0m\t\tstop ss-tproxy"
