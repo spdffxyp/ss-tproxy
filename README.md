@@ -1,7 +1,7 @@
 ## ss-redir + iptables 透明代理/一键脚本
-使用之前，请先安装 [shadowsocks-libev](https://github.com/shadowsocks/shadowsocks-libev)、[chinadns](https://github.com/shadowsocks/ChinaDNS)、[dnsforwarder](https://github.com/holmium/dnsforwarder)、ipset！！！
-如果你不知道如何安装，请前往 [ss-redir透明代理 - 安装相关组件](https://www.zfl9.com/ss-redir.html#安装相关组件)。
-并且，强烈建议先阅读 [ss-redir透明代理](https://www.zfl9.com/ss-redir.html)，不然，你会觉得一头雾水。
+- 请先安装 [shadowsocks-libev](https://github.com/shadowsocks/shadowsocks-libev)、[chinadns](https://github.com/shadowsocks/ChinaDNS)、[dnsforwarder](https://github.com/holmium/dnsforwarder)、ipset！！！
+- 如果你不知道如何安装，请前往 [ss-redir透明代理 - 安装相关组件](https://www.zfl9.com/ss-redir.html#安装相关组件)。
+- 并且，强烈建议先阅读 [ss-redir透明代理](https://www.zfl9.com/ss-redir.html)，不然，你会觉得一头雾水。
 
 ## ss-tproxy - 初始化步骤
 **获取一键脚本**
