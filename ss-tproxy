@@ -92,7 +92,7 @@ function ip_forward() {
     esac
 }
 
-# 'dnsforwarder/config' 配置文件 show/update
+# 'dnsforwarder/config' 配置文件 show/flush/update
 function dnsforwarder_config {
     case ${1} in
         show)
@@ -100,6 +100,15 @@ function dnsforwarder_config {
                 echo -e "\e[37m${dnsforwarder_conf}:\e[0m"
                 cat ${dnsforwarder_conf}
             } | more
+            ;;
+        flush)
+            if [ $(pgrep -c dnsforwarder) -eq 0 ]; then
+                rm -fr /root/.dnsforwarder/cache
+            else
+                pgrep dnsforwarder | xargs kill -9 &> /dev/null
+                rm -fr /root/.dnsforwarder/cache
+                dnsforwarder -d &> /dev/null
+            fi
             ;;
         update)
             cat << EOF > ${dnsforwarder_conf}
@@ -387,6 +396,9 @@ case ${1} in
 
     show_dnsfwd)
         dnsforwarder_config show
+        ;;
+    flush_dnsfwd)
+        dnsforwarder_config flush
         ;;
     update_dnsfwd)
         dnsforwarder_config update
