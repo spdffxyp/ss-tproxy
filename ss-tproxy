@@ -144,12 +144,16 @@ function ipset_chinaip() {
         restore)
             ipset -R < ${ipset_save_file}
             ;;
-        update) # 必须先执行 iptables_shadowsocks clear
+        update)
             curl -sL http://f.ip.cn/rt/chnroutes.txt | egrep -v '^\s*$|^\s*#' > /tmp/ss-tproxy_chinaip.txt
             echo -n > /tmp/ss-tproxy_chinaip.sh
             for i in `cat /tmp/ss-tproxy_chinaip.txt`; do echo "ipset -A chinaip ${i}" >> /tmp/ss-tproxy_chinaip.sh; done
-            ipset -X &> /dev/null
-            ipset -N chinaip hash:net
+            ipset -L chinaip &> /dev/null
+            if [ $? -ne 0 ]; then
+                ipset -N chinaip hash:net
+            else
+                ipset -F chinaip &> /dev/null
+            fi
             bash /tmp/ss-tproxy_chinaip.sh
             ipset -S > ${ipset_save_file}
             rm -fr /tmp/ss-tproxy_chinaip.txt /tmp/ss-tproxy_chinaip.sh
@@ -176,6 +180,8 @@ function iptables_shadowsocks() {
             iptables -t nat -A POSTROUTING -s ${iptables_intranet} -j MASQUERADE
             ;;
         restore)
+            ipset -L chinaip &> /dev/null
+            if [ $? -ne 0 ]; then ipset -R < ${ipset_save_file}; fi
             iptables-restore < ${iptables_save_file}
             ;;
         update)
@@ -349,9 +355,7 @@ case ${1} in
         ipset_chinaip restore
         ;;
     update_ipset)
-        iptables_shadowsocks clear
         ipset_chinaip update
-        iptables_shadowsocks update
         ;;
 
     show_ipts)
