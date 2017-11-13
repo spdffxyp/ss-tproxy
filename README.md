@@ -1,6 +1,5 @@
 ## ss-redir + iptables 透明代理/一键脚本
-> 
-使用之前，请先安装 shadowsocks-libev、chinadns、dnsforwarder、ipset！！！
+> 使用之前，请先安装 shadowsocks-libev、chinadns、dnsforwarder、ipset！！！
 如果你不知道如何安装，请前往 [ss-redir透明代理 - 安装相关组件](https://www.zfl9.com/ss-redir.html#安装相关组件)。
 
 ## ss-tproxy - 初始化步骤
