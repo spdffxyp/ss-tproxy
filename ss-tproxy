@@ -70,7 +70,7 @@ function ipset_chinaip() {
             ipset -X &> /dev/null
             ;;
         restore)
-            ipset -R < ${ipset_save_file}
+            ipset -R < ${ipset_save_file} &> /dev/null
             ;;
         update)
             curl -sL http://f.ip.cn/rt/chnroutes.txt | egrep -v '^\s*$|^\s*#' > /tmp/ss-tproxy_chinaip.txt
@@ -110,7 +110,7 @@ function iptables_shadowsocks() {
         restore)
             ipset -L chinaip &> /dev/null
             if [ $? -ne 0 ]; then ipset -R < ${ipset_save_file}; fi
-            iptables-restore < ${iptables_save_file}
+            iptables-restore < ${iptables_save_file} &> /dev/null
             ;;
         update)
             iptables -t mangle -F
@@ -254,11 +254,18 @@ function chk_file() {
 }
 
 # start() 函数
-# 检查相关文件是否存在，若不存在则调用 exit 退出
 # 运行 ss-redir、ss-tunnel、chinadns、dnsforwarder
 # 恢复 ipset_chinaip、恢复 iptables_shadowsocks、设置策略路由、开启网卡转发
 # 设置系统 dns
 function start() {
+    if [ ! -e ${ipset_save_file} ]; then
+        ipset_chinaip update
+    fi
+
+    if [ ! -e ${iptables_save_file} ]; then
+        iptables_shadowsocks update
+    fi
+
     chk_file
 
     if [ ${redir_verbose} == 'true' ]; then
