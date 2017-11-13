@@ -18,9 +18,11 @@
 
 **配置开机自启**
 - RHEL/CentOS 6.x 及其它使用 sysvinit 的发行版
-使用`/etc/rc.d/rc.local`，追加一行：`echo "/usr/local/bin/ss-tproxy start" >> /etc/rc.d/rc.local`
+ 1. 使用`/etc/rc.d/rc.local`文件
+ 2. `echo "/usr/local/bin/ss-tproxy start" >> /etc/rc.d/rc.local`
 - RHEL/CentOS 7.x 及其它使用 systemd 的发行版
-安装 ss-tproxy.service 服务：`cp -af ss-tproxy.service /etc/systemd/system/ && systemctl daemon-reload && systemctl enable ss-tproxy`
+ 1. 安装 ss-tproxy.service 服务
+ 2. `cp -af ss-tproxy.service /etc/systemd/system/ && systemctl daemon-reload && systemctl enable ss-tproxy`
 
 ## ss-tproxy - 参数详解
 **start|stop|status|restart**
@@ -30,35 +32,35 @@
 4. `ss-tproxy restart`，重启 ss-tproxy；
 
 **其他参数**
-`show_dnsfwd`：查看 dnsforwarder/config 配置文件
-`flush_dnsfwd`：清空 dnsforwarder/cache dns缓存
-`update_dnsfwd`：更新 dnsforwarder/config 配置文件，并重启 dnsforwarder 使其生效
+- `show_dnsfwd`：查看 dnsforwarder/config 配置文件
+- `flush_dnsfwd`：清空 dnsforwarder/cache dns缓存
+- `update_dnsfwd`：更新 dnsforwarder/config 配置文件，并重启 dnsforwarder 使其生效
 
-`show_ipset`：查看 ipset-chinaip 大陆地址段
-`clear_ipset`：清空 ipset-chinaip 大陆地址段
-`restore_ipset`：恢复 ipset-chinaip 大陆地址段 from 'ipset.chinaip'
-`update_ipset`：更新 ipset-chinaip 大陆地址段
+- `show_ipset`：查看 ipset-chinaip 大陆地址段
+- `clear_ipset`：清空 ipset-chinaip 大陆地址段
+- `restore_ipset`：恢复 ipset-chinaip 大陆地址段 from 'ipset.chinaip'
+- `update_ipset`：更新 ipset-chinaip 大陆地址段
 
-`show_ipts`：查看 iptables-shadowsocks 规则
-`clear_ipts`：清空 iptables-shadowsocks 规则
-`restore_ipts`：恢复 iptables-shadowsocks 规则 from 'iptables.shadowsocks'
-`update_ipts`：更新 iptables-shadowsocks 规则
+- `show_ipts`：查看 iptables-shadowsocks 规则
+- `clear_ipts`：清空 iptables-shadowsocks 规则
+- `restore_ipts`：恢复 iptables-shadowsocks 规则 from 'iptables.shadowsocks'
+- `update_ipts`：更新 iptables-shadowsocks 规则
 
-`show_rule`：查看 PRB 策略路由规则
-`clear_rule`：清空 PBR 策略路由规则
-`restore_rule`：设置 PBR 策略路由规则
+- `show_rule`：查看 PRB 策略路由规则
+- `clear_rule`：清空 PBR 策略路由规则
+- `restore_rule`：设置 PBR 策略路由规则
 
-`show_ipfwd`：查看内核网卡转发功能是否已开启
-`edit_ipfwd`：编辑 '/etc/sysctl.conf' 配置文件，并执行 'sysctl -p' 使其生效
-`enable_ipfwd`：开启内核网卡转发功能
+- `show_ipfwd`：查看内核网卡转发功能是否已开启
+- `edit_ipfwd`：编辑 '/etc/sysctl.conf' 配置文件，并执行 'sysctl -p' 使其生效
+- `enable_ipfwd`：开启内核网卡转发功能
 
-`show_dns`：查看当前系统 dns 服务器设置
-`edit_dns`：编辑当前系统 dns 服务器设置 '/etc/resolv.conf'
-`tproxy_dns`：设置当前系统 dns 服务器为 127.0.0.1
-`original_dns`：恢复当前系统 dns 服务器为 114.114.114.114、114.114.115.115（默认）
+- `show_dns`：查看当前系统 dns 服务器设置
+- `edit_dns`：编辑当前系统 dns 服务器设置 '/etc/resolv.conf'
+- `tproxy_dns`：设置当前系统 dns 服务器为 127.0.0.1
+- `original_dns`：恢复当前系统 dns 服务器为 114.114.114.114、114.114.115.115（默认）
 
 ## 关于
-@author：Otokaze
-@url：https://www.zfl9.com
-@ref: https://www.zfl9.com/ss-redir.html
-@date: 2017-11-13 13:23:35 CST
+- author：Otokaze
+- url：https://www.zfl9.com
+- ref: https://www.zfl9.com/ss-redir.html
+- date: 2017-11-13 13:23:35 CST
