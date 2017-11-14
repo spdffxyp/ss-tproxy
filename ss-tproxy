@@ -36,7 +36,6 @@ ReloadCache ${dnsforwarder_cache_reload_on_start} # 启动时加载已有的文�
 OverwriteCache ${dnsforwarder_cache_overwrite_when_reload_failed} # 当已有的文件缓存载入失败时，覆盖原文件
 EOF
 }
-
 function dnsfwd_flush() {
     if [ $(pgrep -c dnsforwarder) -eq 0 ]; then
         rm -fr /root/.dnsforwarder/cache
@@ -172,9 +171,9 @@ function start() {
     fi
 
     if [ ${chinadns_verbose} == 'true' ]; then
-        nohup chinadns -b ${chinadns_addr} -p ${chinadns_port} -s ${chinadns_upstream} -c ${chinadns_chnroute} -l ${chinadns_iplist} -m -d -v < /dev/null &>> ${chinadns_log} &
+        nohup chinadns -b ${chinadns_addr} -p ${chinadns_port} -s ${chinadns_upstream} -c ${chinadns_chnroute} -l ${chinadns_iplist} -m -v < /dev/null &>> ${chinadns_log} &
     else
-        nohup chinadns -b ${chinadns_addr} -p ${chinadns_port} -s ${chinadns_upstream} -c ${chinadns_chnroute} -l ${chinadns_iplist} -m -d < /dev/null &>> ${chinadns_log} &
+        nohup chinadns -b ${chinadns_addr} -p ${chinadns_port} -s ${chinadns_upstream} -c ${chinadns_chnroute} -l ${chinadns_iplist} -m < /dev/null &>> ${chinadns_log} &
     fi
 
     dnsfwd_update
@@ -265,6 +264,7 @@ stop)
 restart)
     stop
     status
+    echo
     start
     status
     ;;
