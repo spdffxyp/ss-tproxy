@@ -1,6 +1,6 @@
 #!/bin/bash
 
-main_cfg='./ss-tproxy.conf'
+main_cfg='/etc/ss-tproxy.conf'
 
 if [ ! -e ${main_cfg} ]; then
     echo -e "\e[37m${main_cfg}\e[0m  [\e[1;35mnot_exist\e[0m]"
