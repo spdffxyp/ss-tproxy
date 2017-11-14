@@ -29,8 +29,8 @@
 2. `ss-tproxy status`，ss-tproxy 运行状态；
 3. `ss-tproxy stop`，停止 ss-tproxy；
 4. `ss-tproxy restart`，重启 ss-tproxy；
-5. `ss-tproxy flush_dnsfwd`，清空 dnsforwarder dns缓存
-6. `ss-tproxy update_chnip`，更新 ipset-chnip 大陆地址段
+5. `ss-tproxy flush_dnsfwd`，清空 dnsforwarder dns缓存；
+6. `ss-tproxy update_chnip`，更新 ipset-chnip 大陆地址段；
 
 ## ss-tproxy - 关于
 - author：Otokaze
