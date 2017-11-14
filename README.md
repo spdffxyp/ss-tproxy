@@ -32,7 +32,7 @@
 5. `ss-tproxy flush_dnsfwd`，清空 dnsforwarder dns缓存
 6. `ss-tproxy update_chnip`，更新 ipset-chnip 大陆地址段
 
-## ss-tproxy 关于
+## ss-tproxy - 关于
 - author：Otokaze
 - url：https://www.zfl9.com
 - ref: https://www.zfl9.com/ss-redir.html
