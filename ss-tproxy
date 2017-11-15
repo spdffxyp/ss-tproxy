@@ -147,6 +147,13 @@ nameserver ${dns_original_2}
 EOF
 }
 
+function current_ip() {
+    ip_info=$(curl -sL ip.chinaz.com/getip.aspx | sed -r "s/^\{ip:'(.*)',address:'(.*)'\}$/\1|\2/g")
+    my_ip=$(echo ${ip_info} | awk -F'|' '{print $1}')
+    my_loc=$(echo ${ip_info} | awk -F'|' '{print $2}')
+    echo -e "\e[37mIP:\e[0m ${my_ip}\t\e[37m位置:\e[0m ${my_loc}"
+}
+
 function start() {
     if [ ! -e ${chinadns_chnroute} ]; then
         echo -e "\e[37m${chinadns_chnroute}\e[0m  [\e[1;35mnot_exist\e[0m]"
@@ -243,6 +250,7 @@ function usage() {
     echo -e "\t\e[33mrestart\e[0m\t\trestart ss-tproxy"
     echo -e "\t\e[33mstatus\e[0m\t\tshow ss-tproxy status"
     echo
+    echo -e "\t\e[33mcurrent_ip\e[0m\tshow current_ip info"
     echo -e "\t\e[33mflush_dnsfwd\e[0m\tflush dnsforwarder cache"
     echo -e "\t\e[33mupdate_chnip\e[0m\tupdate ipset-chnip lists"
     echo -e "}"
@@ -269,6 +277,9 @@ restart)
     status
     ;;
 
+current_ip)
+    current_ip
+    ;;
 flush_dnsfwd)
     dnsfwd_flush
     ;;
