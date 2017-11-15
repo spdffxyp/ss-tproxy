@@ -251,7 +251,7 @@ function usage() {
     echo -e "\t\e[33mstatus\e[0m\t\tshow ss-tproxy status"
     echo
     echo -e "\t\e[33mcurrent_ip\e[0m\tshow current_ip info"
-    echo -e "\t\e[33mflush_dnsfwd\e[0m\tflush dnsforwarder cache"
+    echo -e "\t\e[33mflush_dnsche\e[0m\tflush dnsforwarder cache"
     echo -e "\t\e[33mupdate_chnip\e[0m\tupdate ipset-chnip lists"
     echo -e "}"
 } | more
@@ -280,7 +280,7 @@ restart)
 current_ip)
     current_ip
     ;;
-flush_dnsfwd)
+flush_dnsche)
     dnsfwd_flush
     ;;
 update_chnip)
