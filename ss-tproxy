@@ -170,36 +170,36 @@ function start() {
         echo -e "\e[37m${ss_conf}\e[0m  [\e[1;35mnot_exist\e[0m]"
         exit 1
     fi
-	
-	ss_kcp_param=' '
+
+    ss_kcp_param=' '
     if [ ${use_kcp} == 'true' ]; then
         nohup ${kcp_client} -c ${kcp_conf} < /dev/null &>> ${kcp_log} &
         kcp_listen=`cat ${kcp_conf} | grep localaddr | sed -nr 's/.*"([0-9.]+):([0-9]+).*$/\1/p'`
         kcp_port=`cat ${kcp_conf} | grep localaddr | sed -nr 's/.*"([0-9.]+):([0-9]+).*$/\2/p'`
-		ss_kcp_param="-s "${kcp_listen}" -p "${kcp_port}
+        ss_kcp_param="-s "${kcp_listen}" -p "${kcp_port}
     fi
 
     verbose_log=' '
     if [ ${redir_verbose} == 'true' ]; then
-	    verbose_log='-v'
+            verbose_log='-v'
     fi
     nohup ss-redir ${ss_kcp_param} -c ${ss_conf} -b ${redir_addr} -l ${redir_port} -u ${verbose_log} < /dev/null &>> ${redir_log} &
 
     verbose_log=' '
     if [ ${tunnel_verbose} == 'true' ]; then
-	    verbose_log='-v'
+            verbose_log='-v'
     fi
     nohup ss-tunnel -c ${ss_conf} -b ${tunnel_addr} -l ${tunnel_port} -L ${tunnel_upstream} -u ${verbose_log} < /dev/null &>> ${tunnel_log} &
 
     verbose_log=' '
     if [ ${local_verbose} == 'true' ]; then
-	    verbose_log='-v'
+            verbose_log='-v'
     fi
     nohup ss-local ${ss_kcp_param} -c ${ss_conf} ${verbose_log} < /dev/null &>> ${local_log} &
 
     verbose_log=' '
     if [ ${chinadns_verbose} == 'true' ]; then
-	    verbose_log='-v'
+            verbose_log='-v'
     fi
     nohup chinadns -b ${chinadns_addr} -p ${chinadns_port} -s ${chinadns_upstream} -c ${chinadns_chnroute} -l ${chinadns_iplist} -m ${verbose_log} < /dev/null &>> ${chinadns_log} &
 
@@ -243,7 +243,7 @@ function status() {
     else
         echo -e "\e[37mkcp_client\e[0m\t[\e[1;35mstopped\e[0m]"
     fi
-	
+
     if [ $(pgrep -c ss-redir) -ge 1 ]; then
         echo -e "\e[37mss-redir\e[0m\t[\e[1;32mrunning\e[0m]"
     else
